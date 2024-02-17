@@ -1,0 +1,33 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: reggie_take_out
+  datasource:
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/reggie?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: root
+      password: 3582478gxk
+mybatis-plus:
+  configuration:
+    #在映射实体或者属性时，将数据库中表名和字段名中的下划线去掉，按照驼峰命名法映射
+    map-underscore-to-camel-case: true
+    # log-impl 是 MyBatis Plus 配置文件中的一个属性，用于指定 MyBatis 的日志实现。
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 在MyBatis Plus中，id-type 用于指定实体类主键（ID）的生成策略。
+      # ASSIGN_ID，这是 MyBatis Plus 中的一种特殊策略。ASSIGN_ID 表示主键的值是手动赋值的，即用户需要在插入数据时手动设置主键的值。
+      # 这通常用于主键值由程序控制或其他手段生成的情况，而不是由数据库自动增长。
+      id-type: ASSIGN_ID
+reggie:
+  path: "/Users/kai/Pictures/ReggieImages/"
+
+# 邮箱相关配置，这里主要是配置需要用什么邮箱去发送验证信息
+mail:
+  suffix: "qq"
+  smtp-server: "smtp.qq.com"
+  smtp-port: 587
+  authentication: "pxyokuflrqofbjje"
+  user: "328223290@qq.com"
