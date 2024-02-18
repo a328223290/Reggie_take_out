@@ -1,3 +1,4 @@
+# .gitinore主要是用来指定哪些文件需要被忽略，无需跟踪
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

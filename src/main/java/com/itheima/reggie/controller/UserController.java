@@ -11,6 +11,7 @@ import com.itheima.reggie.utils.MailUtils;
 import com.itheima.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpSession;
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -31,6 +33,9 @@ public class UserController {
 
     @Autowired
     private MailProperties mailProperties;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      *  发送手机验证码
@@ -54,8 +59,8 @@ public class UserController {
             }
             log.info("当前邮箱验证码为: {}", code);
 
-            // 将生成的验证码存入session中
-            session.setAttribute(email, code);
+            // 将生成的验证码存入redis中，设置时效3分钟。
+            redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
 
             return R.success("邮箱验证码短信发送成功");
         } else throw new CustomException("邮箱不能为空");
@@ -72,8 +77,9 @@ public class UserController {
         // 获取验证码
         String code = map.get("code").toString();
 
-        // 从Session中获取保存的验证码
-        Object codeInSession = session.getAttribute(email);
+        // 从redis中获取保存的验证码
+        Object codeInSession = redisTemplate.opsForValue().get(email);
+        log.info("user login 从redis中获取出的验证码: {}", codeInSession);
 
         // 进行验证码比对，如成功则登陆成功
         if(codeInSession != null && codeInSession.equals(code)) {
