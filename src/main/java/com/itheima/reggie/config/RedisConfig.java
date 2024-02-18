@@ -16,7 +16,7 @@ public class RedisConfig {
     @Bean
     public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory){
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
-        // 默认的Key序列化器是JdkSerializationRedisSerializer，默认模式下会直接给出字节码
+        // 默认的序列化器是JdkSerializationRedisSerializer，默认模式下会直接给出字节码
         // 我们设置为StringRedisSerializer，这样就可以直接看到字符串表示的数据，方便许多。
         redisTemplate.setDefaultSerializer(new StringRedisSerializer());
         redisTemplate.setConnectionFactory(redisConnectionFactory);

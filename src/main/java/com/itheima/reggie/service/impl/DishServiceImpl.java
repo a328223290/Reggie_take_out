@@ -6,11 +6,13 @@ import com.itheima.reggie.common.CustomException;
 import com.itheima.reggie.dto.DishDto;
 import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.DishFlavor;
+import com.itheima.reggie.entity.SetmealDish;
 import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
 import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.mapper.DishMapper;
+import com.itheima.reggie.service.SetmealDishService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private SetmealDishService setmealDishService;
+
     @Value("${reggie.path}")
     private String basePath;
 
@@ -53,6 +58,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             item.setDishId(dishId);
             return item;
         }).collect(Collectors.toList());
+
         // 执行批量保存操作
         dishFlavorService.saveBatch(flavors);
     }
@@ -153,5 +159,15 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         LambdaQueryWrapper<DishFlavor> dishFlavorQueryWrapper = new LambdaQueryWrapper<>();
         dishFlavorQueryWrapper.in(DishFlavor::getDishId, ids).eq(DishFlavor::getIsDeleted, 0);
         dishFlavorService.update(dishFlavor, dishFlavorQueryWrapper);
+
+        // 3. 删除setmeal_dish数据
+        LambdaQueryWrapper<SetmealDish> setmealDishLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        setmealDishLambdaQueryWrapper.in(SetmealDish::getDishId, ids).eq(SetmealDish::getIsDeleted, 0);
+        List<SetmealDish> setmealDishList = setmealDishService.list(setmealDishLambdaQueryWrapper);
+        setmealDishService.updateBatchById(setmealDishList.stream().map((item)->{
+            item.setIsDeleted(1);
+            return item;
+        }).collect(Collectors.toList()));
+
     }
 }

@@ -1,5 +1,6 @@
 package com.itheima.reggie.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.itheima.reggie.common.R;
@@ -13,11 +14,13 @@ import com.itheima.reggie.service.DishService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,6 +36,9 @@ public class DishController {
 
     @Autowired
     private DishFlavorService dishFlavorService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @GetMapping("/page")
     public R<Page> page(int page, int pageSize, String name){
@@ -72,6 +78,11 @@ public class DishController {
         log.info("保存菜品：{}", dishDto);
 
         dishService.saveWithFlavor(dishDto);
+
+        // 清空redis数据
+        String key = "dish_" + dishDto.getCategoryId() + "_1";
+        redisTemplate.delete(key);
+
         return R.success("保存菜品成功");
     }
 
@@ -83,6 +94,11 @@ public class DishController {
     @PutMapping
     public R<String> update(@RequestBody DishDto dishDto) {
         dishService.updateWithFlavor(dishDto);
+
+        // 清空redis数据
+        String key = "dish_" + dishDto.getCategoryId() + "_1";
+        redisTemplate.delete(key);
+
         return R.success("更新菜品成功");
     }
 
@@ -119,6 +135,16 @@ public class DishController {
     @GetMapping("/list")
     public R<List> list(Long categoryId){
         log.info("当前categoryId: {}", categoryId);
+
+        String key = "dish_" + categoryId + "_1";
+        // 先判断redis数据库中有没有缓存数据
+        Object cachedDishDtoList = redisTemplate.opsForValue().get(key);
+        if(cachedDishDtoList != null){
+            // 如果存在数据，则直接返回
+            return R.success((List<DishDto>)JSON.parse(cachedDishDtoList.toString()));
+        }
+
+
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Dish::getCategoryId, categoryId).orderByDesc(Dish::getUpdateTime);
         List<Dish> dishList = dishService.list(queryWrapper);
@@ -132,6 +158,10 @@ public class DishController {
             dishDto.setFlavors(dishFlavorList);
             return dishDto;
         }).collect(Collectors.toList());
+
+        // 加入到redis缓存当中，保存1小时
+        // 注意由于我们设置了序列化器为StringRedisSerializer，所以这里需要把dishDtoList转换为String，可以考虑转换为JSON格式
+        redisTemplate.opsForValue().set(key, JSON.toJSONString(dishDtoList), 60, TimeUnit.MINUTES);
 
         return R.success(dishDtoList);
     }
