@@ -96,6 +96,7 @@
             <version>1.4</version>
         </dependency>
 
+        <!-- configurationProperties的依赖（读取.yml配置） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>

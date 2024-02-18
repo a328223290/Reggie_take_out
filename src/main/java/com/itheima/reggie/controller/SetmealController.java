@@ -15,6 +15,9 @@ import com.itheima.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +42,7 @@ public class SetmealController {
     private CategoryService categoryService;
 
     @Autowired
-    private DishService dishService;
+    private CacheManager cacheManager;
 
 
     @GetMapping("/page")
@@ -68,6 +71,7 @@ public class SetmealController {
         return R.success(setmealDtoPageInfo);
     }
 
+    @CacheEvict(cacheNames = "setMealCache", key = "#setmealDto.categoryId + '_1'")
     @PostMapping
     public R<String> saveWithDish(@RequestBody SetmealDto setmealDto){
         setmealService.saveWithDish(setmealDto);
@@ -82,6 +86,7 @@ public class SetmealController {
         return R.success(setmealDto);
     }
 
+    @CacheEvict(cacheNames = "setMealCache", key = "#setmealDto.categoryId + '_1'")
     @PutMapping
     public R<String> updateWithDish(@RequestBody SetmealDto setmealDto){
         setmealService.updateWithDish(setmealDto);
@@ -111,6 +116,7 @@ public class SetmealController {
         return R.success("更新启售/停售状态成功");
     }
 
+    @Cacheable(cacheNames = "setMealCache", key = "#setmeal.categoryId + '_1'")
     @GetMapping("/list")
     public R<List> list(Setmeal setmeal){
         log.info("setmeal list, categoryId: {}, status: {}", setmeal.getCategoryId(), setmeal.getStatus());
